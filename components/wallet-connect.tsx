@@ -8,7 +8,13 @@ import { client, isThirdwebConfigured, SUPPORTED_WALLETS } from "@/lib/thirdweb-
 export function WalletConnect() {
   const [mounted, setMounted] = useState(false)
   const [hasError, setHasError] = useState(false)
-  const account = useActiveAccount()
+  
+  let account
+  try {
+    account = useActiveAccount()
+  } catch (e) {
+    console.log("[v0] useActiveAccount error:", e)
+  }
 
   useEffect(() => {
     setMounted(true)

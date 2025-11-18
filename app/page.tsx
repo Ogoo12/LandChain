@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { ArrowRight, Shield, Lock, Zap, CheckCircle2 } from 'lucide-react'
 import Link from 'next/link'
-import { WalletConnect } from '@/components/wallet-connect'
 
 export default function Home() {
   return (
@@ -19,7 +18,6 @@ export default function Home() {
             <span className="font-bold text-lg">LandChain</span>
           </div>
           <div className="flex items-center gap-4">
-            <WalletConnect />
             <Link href="/dashboard">
               <Button className="bg-blue-600 hover:bg-blue-700">Dashboard</Button>
             </Link>

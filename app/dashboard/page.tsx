@@ -7,6 +7,12 @@ import { Badge } from "@/components/ui/badge"
 import { LayoutWrapper } from "@/components/layout-wrapper"
 import { Home, CheckCircle2, AlertCircle, TrendingUp } from 'lucide-react'
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
+
+const WalletConnect = dynamic(() => import('@/components/wallet-connect').then(mod => ({ default: mod.WalletConnect })), {
+  ssr: false,
+  loading: () => <Button disabled className="bg-gray-600 text-xs">Connecting...</Button>
+})
 
 interface DashboardStats {
   totalProperties: number
@@ -69,10 +75,15 @@ export default function DashboardPage() {
   return (
     <LayoutWrapper>
       <div className="space-y-6">
-        {/* Header */}
-        <div className="space-y-2">
-          <h1 className="text-3xl font-bold text-balance">Land Ownership Registry</h1>
-          <p className="text-gray-400">Secure blockchain-based property records with immutable verification</p>
+        {/* Header with Wallet Button */}
+        <div className="flex items-start justify-between gap-4">
+          <div className="space-y-2">
+            <h1 className="text-3xl font-bold text-balance">Land Ownership Registry</h1>
+            <p className="text-gray-400">Secure blockchain-based property records with immutable verification</p>
+          </div>
+          <div className="flex-shrink-0">
+            <WalletConnect />
+          </div>
         </div>
 
         {/* Metrics Grid */}

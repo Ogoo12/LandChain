@@ -6,7 +6,6 @@ import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Shield, Home, Plus, Search, FileText, Lock, Zap } from 'lucide-react'
 import Link from 'next/link'
-import { WalletConnect } from './wallet-connect'
 
 interface LayoutWrapperProps {
   children: React.ReactNode
@@ -31,7 +30,6 @@ export function LayoutWrapper({ children }: LayoutWrapperProps) {
             <Link href="/verify">
               <Button variant="ghost" size="sm">Verify</Button>
             </Link>
-            <WalletConnect />
           </div>
         </div>
       </nav>
