@@ -4,8 +4,14 @@ import type React from "react"
 import { ThirdwebProvider } from "thirdweb/react"
 import Link from "next/link"
 import { Suspense } from "react"
+import { createThirdwebClient } from "thirdweb"
 
 const inter = Inter({ subsets: ["latin"] })
+
+const clientId = process.env.NEXT_PUBLIC_THIRDWEB_CLIENT_ID
+const client = clientId && clientId !== "placeholder" ? createThirdwebClient({
+  clientId: clientId,
+}) : null
 
 export const metadata = {
   title: "LandChain - Blockchain Land Registry",
@@ -30,7 +36,17 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <ThirdwebProvider>
+        {client ? (
+          <ThirdwebProvider>
+            <Suspense fallback={<Loading />}>
+              <nav>
+                <Link href="/">Home</Link>
+                <Link href="/wallet">Wallet</Link>
+              </nav>
+              {children}
+            </Suspense>
+          </ThirdwebProvider>
+        ) : (
           <Suspense fallback={<Loading />}>
             <nav>
               <Link href="/">Home</Link>
@@ -38,7 +54,7 @@ export default function RootLayout({
             </nav>
             {children}
           </Suspense>
-        </ThirdwebProvider>
+        )}
       </body>
     </html>
   )

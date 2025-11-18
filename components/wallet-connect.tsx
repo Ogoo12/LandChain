@@ -3,41 +3,29 @@
 import { useEffect, useState } from "react"
 import { ConnectButton, useActiveAccount } from "thirdweb/react"
 import { Button } from "@/components/ui/button"
-import { client, isThirdwebConfigured } from "@/lib/thirdweb-client"
+import { client, isThirdwebConfigured, SUPPORTED_WALLETS } from "@/lib/thirdweb-client"
 
 export function WalletConnect() {
   const [mounted, setMounted] = useState(false)
+  const [hasError, setHasError] = useState(false)
   const account = useActiveAccount()
 
   useEffect(() => {
     setMounted(true)
   }, [])
 
-  const handleConnect = async () => {
-    if (!isThirdwebConfigured()) {
-      alert('Thirdweb is not configured. Please set NEXT_PUBLIC_THIRDWEB_CLIENT_ID')
-      return
+  useEffect(() => {
+    if (!mounted) return
+
+    const handleWalletError = (error: ErrorEvent) => {
+      if (error.message?.includes("Proposal expired") || error.message?.includes("relay.walletconnect")) {
+        setHasError(true)
+      }
     }
 
-    try {
-      // Simulate wallet connection for demo
-      // In production, integrate with wagmi or ethers.js
-      const mockAddress = "0x" + Math.random().toString(16).slice(2, 42)
-      localStorage.setItem('walletAddress', mockAddress)
-      setAddress(mockAddress)
-      setIsConnected(true)
-      
-      console.log("[v0] Wallet connected:", mockAddress)
-    } catch (error) {
-      console.error("[v0] Connection error:", error)
-    }
-  }
-
-  const handleDisconnect = () => {
-    localStorage.removeItem('walletAddress')
-    setAddress(null)
-    setIsConnected(false)
-  }
+    window.addEventListener("error", handleWalletError)
+    return () => window.removeEventListener("error", handleWalletError)
+  }, [mounted])
 
   if (!mounted) return null
 
@@ -49,15 +37,20 @@ export function WalletConnect() {
     )
   }
 
+  if (!client || hasError) {
+    return (
+      <Button disabled className="bg-gray-600 cursor-not-allowed text-xs" title="Wallet connection unavailable in this environment">
+        Wallet (Unavailable)
+      </Button>
+    )
+  }
+
   return (
-    <div className="flex items-center">
-      {client ? (
-        <ConnectButton client={client} />
-      ) : (
-        <Button disabled className="bg-gray-600 cursor-not-allowed">
-          Wallet Setup Error
-        </Button>
-      )}
-    </div>
+    <ConnectButton 
+      client={client}
+      wallets={SUPPORTED_WALLETS}
+      theme="dark"
+      autoConnect={false}
+    />
   )
 }
