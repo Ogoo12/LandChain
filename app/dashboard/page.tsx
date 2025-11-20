@@ -9,10 +9,7 @@ import { Home, CheckCircle2, AlertCircle, TrendingUp } from 'lucide-react'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
 
-const WalletConnect = dynamic(() => import('@/components/wallet-connect').then(mod => ({ default: mod.WalletConnect })), {
-  ssr: false,
-  loading: () => <Button disabled className="bg-gray-600 text-xs">Connecting...</Button>
-})
+import { SimulatedWalletConnect } from '@/components/simulated-wallet-connect'
 
 interface DashboardStats {
   totalProperties: number
@@ -82,7 +79,7 @@ export default function DashboardPage() {
             <p className="text-gray-400">Secure blockchain-based property records with immutable verification</p>
           </div>
           <div className="flex-shrink-0">
-            <WalletConnect />
+            <SimulatedWalletConnect />
           </div>
         </div>
 

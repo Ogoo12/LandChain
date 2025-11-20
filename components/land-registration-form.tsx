@@ -6,9 +6,13 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { useState } from "react"
 import { Upload, MapPin, FileText, User, DollarSign, Calendar, CheckCircle2 } from 'lucide-react'
+import { useWallet } from "./mock-wallet-provider"
+import { registerLandOnBlockchain } from "@/lib/contract-interactions"
 
 export function LandRegistrationForm() {
+  const { isConnected, address } = useWallet()
   const [step, setStep] = useState(1)
+  const [transactionHash, setTransactionHash] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     ownerName: "",
     ownerEmail: "",
@@ -36,18 +40,45 @@ export function LandRegistrationForm() {
     }
   }
 
+  const handleSubmit = async () => {
+    if (!isConnected || !address) {
+      alert("Please connect your wallet before submitting.")
+      return
+    }
+
+    try {
+      const propertyId = `PID-${Date.now()}`
+      const documentHash = "0x" + [...Array(64)].map(() => Math.floor(Math.random() * 16).toString(16)).join('')
+
+      const result = await registerLandOnBlockchain(
+        address,
+        propertyId,
+        formData.location,
+        parseFloat(formData.area),
+        documentHash,
+        1 // Assuming Ethereum Mainnet, though this is simulated
+      )
+
+      setTransactionHash(result.transactionHash)
+      setStep(6) // Move to success step
+    } catch (error) {
+      console.error("Failed to register land:", error)
+      alert("An error occurred during registration.")
+    }
+  }
+
   return (
     <div className="max-w-2xl mx-auto">
       {/* Progress Indicator */}
       <div className="mb-8">
         <div className="flex gap-4 justify-between mb-4">
-          {[1, 2, 3, 4].map((s) => (
+          {[1, 2, 3, 4, 5].map((s) => (
             <div key={s} className="flex-1">
               <div className={`h-1 rounded-full transition-all ${s <= step ? "bg-gradient-to-r from-blue-400 to-cyan-400" : "bg-slate-700"}`} />
             </div>
           ))}
         </div>
-        <p className="text-sm text-gray-400 text-center">Step {step} of 4</p>
+        <p className="text-sm text-gray-400 text-center">Step {step} of 5</p>
       </div>
 
       {/* Step 1: Owner Information */}
@@ -225,22 +256,67 @@ export function LandRegistrationForm() {
       )}
 
       {/* Navigation Buttons */}
-      <div className="flex gap-4 mt-8">
-        <Button
-          variant="outline"
-          onClick={() => setStep(Math.max(1, step - 1))}
-          disabled={step === 1}
-          className="flex-1"
-        >
-          Previous
-        </Button>
-        <Button
-          onClick={() => setStep(Math.min(4, step + 1))}
-          className="flex-1 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
-        >
-          {step === 4 ? "Submit Registration" : "Next"}
-        </Button>
-      </div>
+      {/* Step 5: Confirmation */}
+      {step === 5 && (
+        <Card className="bg-slate-900/40 border-blue-800/30 p-6 space-y-6">
+          <div>
+            <h2 className="text-xl font-semibold mb-2 flex items-center gap-2">
+              <CheckCircle2 className="h-5 w-5 text-green-400" />
+              Confirm Registration
+            </h2>
+            <p className="text-sm text-gray-400">Review the details before submitting to the blockchain.</p>
+          </div>
+          <div className="space-y-2">
+            <p><strong>Owner:</strong> {formData.ownerName}</p>
+            <p><strong>Location:</strong> {formData.location}</p>
+            <p><strong>Area:</strong> {formData.area} sq ft</p>
+            <p><strong>Documents:</strong> {formData.documents.join(", ")}</p>
+          </div>
+        </Card>
+      )}
+
+      {/* Step 6: Success */}
+      {step === 6 && (
+        <Card className="bg-slate-900/40 border-emerald-800/30 p-6 text-center">
+          <CheckCircle2 className="h-16 w-16 mx-auto mb-4 text-emerald-400" />
+          <h2 className="text-2xl font-semibold mb-2">Registration Submitted!</h2>
+          <p className="text-gray-400 mb-4">
+            Your property has been submitted for registration on the blockchain.
+          </p>
+          <div className="bg-slate-800/50 p-4 rounded-lg">
+            <p className="text-sm text-gray-500">Transaction Hash</p>
+            <p className="font-mono text-xs break-all">{transactionHash}</p>
+          </div>
+        </Card>
+      )}
+
+      {/* Navigation Buttons */}
+      {step < 6 && (
+        <div className="flex gap-4 mt-8">
+          <Button
+            variant="outline"
+            onClick={() => setStep(Math.max(1, step - 1))}
+            disabled={step === 1}
+            className="flex-1"
+          >
+            Previous
+          </Button>
+          <Button
+            onClick={step === 5 ? handleSubmit : () => setStep(Math.min(5, step + 1))}
+            className="flex-1 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
+            disabled={step === 5 && !isConnected}
+          >
+            {step === 5 ? "Confirm Registration" : "Next"}
+          </Button>
+        </div>
+      )}
+
+      {/* Wallet Not Connected Message */}
+      {step === 5 && !isConnected && (
+        <p className="text-center text-yellow-400 mt-4">
+          Please connect your wallet to submit the registration.
+        </p>
+      )}
     </div>
   )
 }

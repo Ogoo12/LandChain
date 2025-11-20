@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge"
 import { useState, useEffect } from "react"
 import { Search, CheckCircle2, Shield, Clock, User, MapPin, DollarSign, Zap, FileText } from 'lucide-react'
 import { EmptyState } from "@/components/empty-state"
+import { verifyOwnershipOnBlockchain } from "@/lib/contract-interactions"
+import { useWallet } from "./mock-wallet-provider"
 
 interface LandRecord {
   id: string
@@ -25,6 +27,21 @@ export function LandVerification() {
   const [records, setRecords] = useState<LandRecord[]>([])
   const [loading, setLoading] = useState(false)
   const [searched, setSearched] = useState(false)
+  const [verificationResult, setVerificationResult] = useState<any>(null)
+  const [isVerifying, setIsVerifying] = useState(false)
+  const { isConnected } = useWallet()
+
+  const handleVerify = async (propertyId: string) => {
+    setIsVerifying(true)
+    try {
+      const result = await verifyOwnershipOnBlockchain(propertyId, 1) // Assuming chainId 1
+      setVerificationResult(result)
+    } catch (error) {
+      console.error("Verification failed:", error)
+    } finally {
+      setIsVerifying(false)
+    }
+  }
 
   const handleSearch = async () => {
     setLoading(true)
@@ -178,9 +195,31 @@ export function LandVerification() {
 
                   {/* Actions */}
                   <div className="flex gap-2">
-                    <Button className="flex-1 bg-blue-600 hover:bg-blue-700">View Full Details</Button>
+                    <Button className="flex-1 bg-blue-600 hover:bg-blue-700" onClick={() => handleVerify(selected.id)} disabled={!isConnected || isVerifying}>
+                      {isVerifying ? "Verifying..." : "Verify on Blockchain"}
+                    </Button>
                     <Button variant="outline" className="flex-1">Download Certificate</Button>
                   </div>
+
+                  {!isConnected && (
+                    <p className="text-center text-yellow-400 text-sm mt-2">
+                      Please connect your wallet to verify on the blockchain.
+                    </p>
+                  )}
+
+                  {verificationResult && (
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center" onClick={() => setVerificationResult(null)}>
+                      <Card className="bg-slate-900 border-emerald-800/50 p-6 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
+                        <h2 className="text-xl font-semibold mb-4 text-emerald-400">Verification Successful</h2>
+                        <div className="space-y-2">
+                          <p><strong>Owner Address:</strong> <span className="font-mono text-sm">{verificationResult.owner}</span></p>
+                          <p><strong>Transaction Hash:</strong> <span className="font-mono text-sm break-all">{verificationResult.transactionHash}</span></p>
+                          <p><strong>Registered At:</strong> {new Date(verificationResult.registeredAt).toLocaleString()}</p>
+                        </div>
+                        <Button onClick={() => setVerificationResult(null)} className="mt-4 w-full">Close</Button>
+                      </Card>
+                    </div>
+                  )}
                 </div>
               ) : null}
             </div>
